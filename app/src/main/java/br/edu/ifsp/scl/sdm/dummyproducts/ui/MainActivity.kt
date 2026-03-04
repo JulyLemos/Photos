@@ -42,9 +42,9 @@ class MainActivity : AppCompatActivity() {
         ProductImageAdapter(this, productImageList)
     }
 
-    companion object {
-        const val PRODUCTS_ENDPOINT = "https://dummyjson.com/products/"
-    }
+//    companion object {
+//        const val PRODUCTS_ENDPOINT = "https://dummyjson.com/products/"
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,19 +84,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun retrieveProducts() =
-        StringRequest(
-            Request.Method.GET,
-            PRODUCTS_ENDPOINT, //passa por ele, onde vai buscar os produtos
-            { response ->
-                Gson().fromJson(response, ProductList::class.java).products.also {
-                    productAdapter.addAll(it)
-                }
-            },
-            {
-                Toast.makeText(this, getString(R.string.request_problem), Toast.LENGTH_SHORT).show()
-            }).also {
+        DummyJSONAPI.ProductListRequest({ productList ->
+            productList.products.also {
+                productAdapter.addAll(it)
+            }
+        }, {
+            Toast.makeText(this, getString(R.string.request_problem), Toast.LENGTH_SHORT).show()
+        }).also {
             DummyJSONAPI.getInstance(this).addToRequestQueue(it)
         }
+
+//Depois do código de cima, esse passa a ser desnecessário, é outra versão do retorno dos produtos
+//        StringRequest(
+//            Request.Method.GET,
+//            PRODUCTS_ENDPOINT, //passa por ele, onde vai buscar os produtos
+//            { response ->
+//                Gson().fromJson(response, ProductList::class.java).products.also {
+//                    productAdapter.addAll(it)
+//                }
+//            },
+//            {
+//                Toast.makeText(this, getString(R.string.request_problem), Toast.LENGTH_SHORT).show()
+//            }).also {
+//            DummyJSONAPI.getInstance(this).addToRequestQueue(it)
+//        }
 
 
 //    private fun retrieveProducts() = Thread {
