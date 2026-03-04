@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(amb.root)
 
         setSupportActionBar(amb.mainTb.apply {
-            title = getString(app_name)
+            title = "Photos"
         })
 
         amb.productsSp.apply {
