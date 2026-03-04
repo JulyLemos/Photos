@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,6 +16,7 @@ import br.edu.ifsp.scl.sdm.dummyproducts.adapter.ProductAdapter
 import br.edu.ifsp.scl.sdm.dummyproducts.adapter.ProductImageAdapter
 import br.edu.ifsp.scl.sdm.dummyproducts.databinding.ActivityMainBinding
 import br.edu.ifsp.scl.sdm.dummyproducts.model.DummyJSONAPI
+import br.edu.ifsp.scl.sdm.dummyproducts.model.Photo
 import br.edu.ifsp.scl.sdm.dummyproducts.model.Product
 import br.edu.ifsp.scl.sdm.dummyproducts.model.ProductList
 import com.android.volley.Request
@@ -42,9 +44,9 @@ class MainActivity : AppCompatActivity() {
         ProductImageAdapter(this, productImageList)
     }
 
-//    companion object {
-//        const val PRODUCTS_ENDPOINT = "https://dummyjson.com/products/"
-//    }
+    companion object {
+        const val PHOTOS_ENDPOINT = "https://jsonplaceholder.typicode.com/photos"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +82,30 @@ class MainActivity : AppCompatActivity() {
             adapter = productImageAdapter
         }
 
+//        amb.photosSp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+//            override fun onItemSelected(
+//                parent: AdapterView<*>?,
+//                view: View?,
+//                position: Int,
+//                id: Long
+//            ) {
+//                amb.productImagesRv.visibility = View.GONE
+//                val photo = photoList[position]
+//
+//                val fixedThumbURL = "${photo.thumbnailUrl.replace("via.placeholder.com","placehold.co")}/FFF.png"
+//
+//                retrieveImage(photo.url, amb.photoIv)
+//                retrieveImage(fixedThumbURL, amb.thumbnailIv)
+//
+//                amb.photoIv.visibility = View.VISIBLE
+//                amb.thumbnailIv.visibility = View.VISIBLE
+//            }
+//
+//            override fun onNothingSelected(parent: AdapterView<*>?) {}
+//        }
+
         retrieveProducts()
+        retrievePhotos()
     }
 
     private fun retrieveProducts() =
@@ -187,4 +212,42 @@ class MainActivity : AppCompatActivity() {
 //        }
 //    }.start()
 
+    private val photoList: MutableList<Photo> = mutableListOf()
+
+    private fun retrievePhotos() = Thread{
+        val connection = URL(PHOTOS_ENDPOINT).openConnection() as HttpURLConnection
+        try {
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val json = InputStreamReader(connection.inputStream).readText()
+                val photos = Gson().fromJson(json, Array<Photo>::class.java).toList()
+                runOnUiThread {
+                    photoList.clear()
+                    photoList.addAll(photos)
+
+                    val titles = photos.map { it.title }
+                    val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, titles)
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                }
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }.start()
+
+    private fun retrieveImage(
+        imageUrl: String, imageView: ImageView) = Thread {
+            val connection = URL(imageUrl).openConnection() as HttpURLConnection
+            try {
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val bitmap = BitmapFactory.decodeStream(connection.inputStream)
+                    runOnUiThread {
+                        imageView.setImageBitmap(bitmap)
+                    }
+                }
+            }finally {
+                connection.disconnect()
+            }
+    }.start()
+
 }
+
